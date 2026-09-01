@@ -1,3 +1,4 @@
+--extra-index-url https://abetlen.github.io/llama-cpp-python/whl/vulkan
 llama-cpp-python
 huggingface-hub
 faster-whisper

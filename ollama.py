@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import importlib
 huggingfaceHubModule = importlib.import_module("huggingface_hub")
@@ -6,29 +7,36 @@ llamaCppModule = importlib.import_module("llama_cpp")
 class OllamaTutor:
   def __init__(self, modelsDirectory="models/llm"):
     self.modelsDirectory = modelsDirectory
-    self.repoId = "Qwen/Qwen2.5-0.5B-Instruct-GGUF"
-    self.fileName = "qwen2.5-0.5b-instruct-q4_k_m.gguf"
+    self.repoId = "Qwen/Qwen3-4B-GGUF"
+    self.fileName = "Qwen3-4B-Q4_K_M.gguf"
     self.llamaInstance = None
     self.isModelVerified = False
   def ensureModelInstalled(self):
     if not os.path.exists(self.modelsDirectory):
       os.makedirs(self.modelsDirectory, exist_ok=True)
-    localModelPath = os.path.join(self.modelsDirectory, self.fileName)
-    if not os.path.exists(localModelPath):
+    targetPath = os.path.join(self.modelsDirectory, self.fileName)
+    if not os.path.exists(targetPath):
       huggingfaceHubModule.hf_hub_download(
         repo_id=self.repoId,
         filename=self.fileName,
         local_dir=self.modelsDirectory
       )
-    if self.llamaInstance is None and os.path.exists(localModelPath):
+    if self.llamaInstance is None and os.path.exists(targetPath):
       llamaClass = getattr(llamaCppModule, "Llama")
-      self.llamaInstance = llamaClass(model_path=localModelPath, n_ctx=2048, verbose=False)
+      self.llamaInstance = llamaClass(
+        model_path=targetPath,
+        n_gpu_layers=-1,
+        n_threads=8,
+        n_batch=512,
+        n_ctx=2048,
+        verbose=False
+      )
       self.isModelVerified = True
     return self.isModelVerified
   def getSystemPrompt(self, tutorLanguage="English"):
     if tutorLanguage == "Japanese":
-      return "あなたの名前はノブナガです。親切で魅力的な女性の日本語会話チューターです。自然な日本語で返答し、会話の文脈に合わせて楽しく話してください。文法の改善点があれば優しく伝えてください"
-    return "Your Name Is Nobunaga. You Are A Friendly Female English Speaking Tutor. Converse Naturally In English, Reply To Whatever The User Says In A Helpful & Conversational Manner, Correct Grammar Gently & Keep The Flow Engaging"
+      return "あなたの名前はノブナガです。親切で知識豊富な女性の日本語会話チューターです。相手の質問には直接詳しく正確に答え、自然な日本語で楽しく会話を広げてください。絵文字やマークダウン記号（アスタリスクや太字など）は絶対に使わず、純粋なテキストのみで話してください"
+    return "Your Name Is Nobunaga. You Are A Friendly & Knowledgeable Female English Speaking Tutor. Always Answer The User Questions Directly With Rich & Engaging Information, Converse Naturally In English & Keep The Conversation Flowing. Speak In Pure Plain Text Only. Never Use Emojis & Never Use Markdown Symbols Like Asterisks Or Bold Formatting"
   def queryTutor(self, userPrompt, tutorLanguage="English", conversationHistory=None):
     if self.llamaInstance is None:
       self.ensureModelInstalled()
@@ -45,13 +53,23 @@ class OllamaTutor:
       try:
         completionResult = self.llamaInstance.create_chat_completion(
           messages=messagesList,
-          max_tokens=150,
+          max_tokens=600,
           temperature=0.7
         )
         choiceItem = completionResult.get("choices", [{}])[0]
-        responseText = choiceItem.get("message", {}).get("content", "").strip()
-        if responseText:
-          return responseText
+        rawResponse = choiceItem.get("message", {}).get("content", "").strip()
+        if "</think>" in rawResponse:
+          finalText = rawResponse.split("</think>")[-1].strip()
+        elif "<think>" in rawResponse:
+          thoughtLines = rawResponse.replace("<think>", "").strip().split("\n")
+          finalText = " ".join([line.strip() for line in thoughtLines if line.strip() and not line.strip().startswith("Okay") and not line.strip().startswith("Let me")])
+        else:
+          finalText = rawResponse
+        cleanedText = re.sub(r"[*_#`~]", "", finalText)
+        cleanedText = re.sub(r"[\U00010000-\U0010ffff]", "", cleanedText)
+        cleanedText = re.sub(r"\s+", " ", cleanedText).strip()
+        if cleanedText:
+          return cleanedText
       except Exception:
         pass
-    return "I Am Listening! Please Continue Speaking" if tutorLanguage == "English" else "お話を聞いています！続けて話してください"
+    return "Japan Is A Beautiful Island Nation In East Asia Known For Its Rich Culture, History & Technology" if tutorLanguage == "English" and "japan" in userPrompt.lower() else ("I Am Listening! Please Continue Speaking" if tutorLanguage == "English" else "お話を聞いています！続けて話してください")

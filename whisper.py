@@ -8,7 +8,7 @@ try:
 except Exception:
   fasterWhisperModule = None
 class WhisperTranscriber:
-  def __init__(self, modelSize="base", downloadRoot="models/whisper"):
+  def __init__(self, modelSize="turbo", downloadRoot="models/whisper"):
     self.modelSize = modelSize
     self.downloadRoot = downloadRoot
     self.modelInstance = None
@@ -23,7 +23,8 @@ class WhisperTranscriber:
           self.modelSize,
           device="cpu",
           compute_type="int8",
-          download_root=self.downloadRoot
+          download_root=self.downloadRoot,
+          cpu_threads=8
         )
         self.isLoaded = True
       except Exception:

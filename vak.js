@@ -32,6 +32,13 @@ function updateStatus(statusText, isAnimating = false) {
   domElements.statusValue.textContent = statusText;
   setWaveActive(isAnimating);
 }
+function unlockAudioPlayback() {
+  if (domElements.audioPlayer && domElements.audioPlayer.src && domElements.audioPlayer.paused) {
+    domElements.audioPlayer.play().catch(() => {});
+  }
+  document.removeEventListener("click", unlockAudioPlayback);
+  document.removeEventListener("keydown", unlockAudioPlayback);
+}
 function appendUserMessage(messageText) {
   const rowDiv = document.createElement("div");
   rowDiv.className = "messageRow userRow";
@@ -63,12 +70,10 @@ function appendTutorMessage(messageText) {
   headerDiv.className = "bubbleHeader";
   const titleSpan = document.createElement("span");
   titleSpan.textContent = "Nobunaga";
-  const replayBtn = document.createElement("button");
-  replayBtn.className = "replayBtn";
-  replayBtn.textContent = "Again";
-  replayBtn.addEventListener("click", () => playSpeech(messageText, appState.activeLanguage));
+  const timeSpan = document.createElement("span");
+  timeSpan.textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   headerDiv.appendChild(titleSpan);
-  headerDiv.appendChild(replayBtn);
+  headerDiv.appendChild(timeSpan);
   const contentDiv = document.createElement("div");
   contentDiv.className = "bubbleContent";
   contentDiv.textContent = messageText;
@@ -126,7 +131,11 @@ async function playSpeech(textToSpeak, languageName) {
         domElements.audioPlayer.onplay = () => updateStatus("Speaking Out Loud", true);
         domElements.audioPlayer.onended = () => updateStatus("Ready For Speaking", false);
         domElements.audioPlayer.onerror = () => updateStatus("Audio Playback Error", false);
-        domElements.audioPlayer.play().catch(() => updateStatus("Click Again To Play Audio", false));
+        domElements.audioPlayer.play().catch(() => {
+          document.addEventListener("click", unlockAudioPlayback, { once: true });
+          document.addEventListener("keydown", unlockAudioPlayback, { once: true });
+          updateStatus("Click Anywhere To Hear Nobunaga", false);
+        });
       } else {
         updateStatus("Ready For Speaking", false);
       }
@@ -196,7 +205,7 @@ function stopAudioRecording() {
     appState.mediaRecorder.stream.getTracks().forEach(trackItem => trackItem.stop());
   }
 }
-function resetConversation() {
+function resetConversation(shouldSpeakGreeting = true) {
   syncActiveLanguage();
   appState.conversationHistory = [];
   domElements.chatStream.innerHTML = "";
@@ -205,11 +214,14 @@ function resetConversation() {
     : "Hi! I Am Nobunaga, Your English Tutor. Please Greet Or Speak Any Topic To Begin";
   appendTutorMessage(welcomeText);
   updateStatus("Ready For Speaking", false);
+  if (shouldSpeakGreeting) {
+    playSpeech(welcomeText, appState.activeLanguage);
+  }
 }
 function attachEventListeners() {
   domElements.languageSelect.addEventListener("change", () => {
     syncActiveLanguage();
-    resetConversation();
+    resetConversation(true);
   });
   domElements.voiceButton.addEventListener("click", toggleVoiceRecording);
   domElements.sendButton.addEventListener("click", () => {
@@ -220,10 +232,10 @@ function attachEventListeners() {
       sendUserMessage(domElements.textInput.value);
     }
   });
-  domElements.clearChatButton.addEventListener("click", resetConversation);
+  domElements.clearChatButton.addEventListener("click", () => resetConversation(false));
 }
 document.addEventListener("DOMContentLoaded", () => {
   attachEventListeners();
   syncActiveLanguage();
-  resetConversation();
+  resetConversation(true);
 });
