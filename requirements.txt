@@ -1,0 +1,6 @@
+llama-cpp-python
+huggingface-hub
+faster-whisper
+sounddevice
+edge-tts
+numpy

@@ -1,0 +1,237 @@
+* {
+  box-sizing: border-box;
+  font: normal 1rem system-ui, sans-serif;
+  color: #f4f4f5;
+  background: #09090b;
+  margin: 0;
+  padding: 0;
+}
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #09090b;
+  color: #f4f4f5;
+}
+#appContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  height: 100vh;
+  padding: 1rem;
+  background: #09090b;
+}
+#mainHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  border-bottom: 1px solid #27272a;
+  padding-bottom: 0.75rem;
+  width: 100%;
+}
+#headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+#headerRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+#appTitle {
+  font-size: 1.35rem;
+  font-weight: normal;
+  color: #22c55e;
+}
+#appSubtitle {
+  font-size: 0.9rem;
+  font-weight: normal;
+  color: #a1a1aa;
+}
+select, input {
+  border: 1px solid #27272a;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  color: #f4f4f5;
+  background: #18181b;
+  font-weight: normal;
+  outline: none;
+}
+#statusSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #27272a;
+  border-radius: 4px;
+  padding: 0.6rem 0.9rem;
+  background: #18181b;
+  width: 100%;
+}
+#statusIndicator {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  background: transparent;
+}
+#statusLabel {
+  color: #a1a1aa;
+  background: transparent;
+}
+#statusValue {
+  color: #22c55e;
+  background: transparent;
+}
+#waveVisualizer {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 1.5rem;
+  background: transparent;
+}
+.waveHidden {
+  display: none !important;
+}
+.waveBar {
+  width: 0.2rem;
+  height: 0.35rem;
+  background: #22c55e;
+  border-radius: 4px;
+  animation: waveMotion 0.8s ease-in-out infinite alternate;
+}
+.waveBarOne { animation-delay: 0.1s; }
+.waveBarTwo { animation-delay: 0.25s; }
+.waveBarThree { animation-delay: 0.4s; }
+.waveBarFour { animation-delay: 0.55s; }
+.waveBarFive { animation-delay: 0.7s; }
+@keyframes waveMotion {
+  0% { height: 0.25rem; }
+  100% { height: 1.35rem; }
+}
+#chatStream {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  border: 1px solid #27272a;
+  border-radius: 4px;
+  padding: 1rem;
+  background: #09090b;
+}
+.messageRow {
+  display: flex;
+  width: 100%;
+  background: transparent;
+}
+.userRow {
+  justify-content: flex-end;
+}
+.tutorRow {
+  justify-content: flex-start;
+}
+.userBubble {
+  max-width: 75%;
+  border: 1px solid #22c55e;
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  background: #18181b;
+  color: #f4f4f5;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.tutorBubble {
+  max-width: 75%;
+  border: 1px solid #27272a;
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  background: #18181b;
+  color: #f4f4f5;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.bubbleHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  border-bottom: 1px solid #27272a;
+  padding-bottom: 0.2rem;
+  background: transparent;
+  color: #a1a1aa;
+}
+.bubbleContent {
+  font-size: 1rem;
+  line-height: 1.4;
+  font-weight: normal;
+  background: transparent;
+}
+#inputFooter {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+#inputBar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid #27272a;
+  border-radius: 4px;
+  padding: 0.4rem;
+  background: #18181b;
+  width: 100%;
+}
+#textInput {
+  flex: 1;
+  border: none;
+  padding: 0.5rem;
+  font-size: 1rem;
+  background: #18181b;
+  color: #f4f4f5;
+}
+.actionBtn {
+  border: 1px solid #27272a;
+  border-radius: 4px;
+  padding: 0.45rem 0.85rem;
+  background: #18181b;
+  color: #f4f4f5;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: normal;
+}
+.iconBtn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #27272a;
+  border-radius: 4px;
+  width: 2.4rem;
+  height: 2.4rem;
+  background: #18181b;
+  color: #f4f4f5;
+  cursor: pointer;
+  padding: 0;
+}
+.recordingActive {
+  outline: 2px solid #22c55e;
+  border-color: #22c55e;
+  color: #22c55e;
+}
+.replayBtn {
+  border: 1px solid #27272a;
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  background: #18181b;
+  color: #22c55e;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: normal;
+}
