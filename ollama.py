@@ -28,15 +28,15 @@ class OllamaTutor:
         n_gpu_layers=-1,
         n_threads=8,
         n_batch=512,
-        n_ctx=2048,
+        n_ctx=4096,
         verbose=False
       )
       self.isModelVerified = True
     return self.isModelVerified
   def getSystemPrompt(self, tutorLanguage="English"):
     if tutorLanguage == "Japanese":
-      return "あなたの名前はノブナガです。親切で知識豊富な女性の日本語会話チューターです。相手の質問には直接詳しく正確に答え、自然な日本語で楽しく会話を広げてください。絵文字やマークダウン記号（アスタリスクや太字など）は絶対に使わず、純粋なテキストのみで話してください"
-    return "Your Name Is Nobunaga. You Are A Friendly & Knowledgeable Female English Speaking Tutor. Always Answer The User Questions Directly With Rich & Engaging Information, Converse Naturally In English & Keep The Conversation Flowing. Speak In Pure Plain Text Only. Never Use Emojis & Never Use Markdown Symbols Like Asterisks Or Bold Formatting"
+      return "あなたの名前はノブナガです。親切で知識豊富な女性の日本語会話チューターです。相手の質問には直接詳しく正確に答え、自然な日本語で楽しく会話を広げてください。絵文字やマークダウン記号（アスタリスクや太字など）は絶対に使わず、純粋なテキストのみで話してください。思考プロセスやタグは出力せず、直接発話してください"
+    return "Your Name Is Nobunaga. You Are A Friendly & Knowledgeable Female English Speaking Tutor. Always Answer The User Questions Directly With Rich & Engaging Information In Two To Four Conversational Sentences, Converse Naturally In English & Keep The Conversation Flowing. Speak In Pure Plain Text Only. Never Output Thinking Tags Or Internal Monologues. Never Use Emojis & Never Use Markdown Symbols Like Asterisks Or Bold Formatting"
   def queryTutor(self, userPrompt, tutorLanguage="English", conversationHistory=None):
     if self.llamaInstance is None:
       self.ensureModelInstalled()
@@ -48,12 +48,13 @@ class OllamaTutor:
       roleName = "user" if historyItem.get("role") == "User" else "assistant"
       textContent = historyItem.get("content", "")
       messagesList.append({"role": roleName, "content": textContent})
-    messagesList.append({"role": "user", "content": userPrompt})
+    if not conversationHistory or conversationHistory[-1].get("content") != userPrompt:
+      messagesList.append({"role": "user", "content": userPrompt})
     if self.llamaInstance is not None:
       try:
         completionResult = self.llamaInstance.create_chat_completion(
           messages=messagesList,
-          max_tokens=600,
+          max_tokens=2048,
           temperature=0.7
         )
         choiceItem = completionResult.get("choices", [{}])[0]
@@ -61,8 +62,7 @@ class OllamaTutor:
         if "</think>" in rawResponse:
           finalText = rawResponse.split("</think>")[-1].strip()
         elif "<think>" in rawResponse:
-          thoughtLines = rawResponse.replace("<think>", "").strip().split("\n")
-          finalText = " ".join([line.strip() for line in thoughtLines if line.strip() and not line.strip().startswith("Okay") and not line.strip().startswith("Let me")])
+          finalText = re.sub(r"<think>.*?</think>", "", rawResponse, flags=re.DOTALL).strip()
         else:
           finalText = rawResponse
         cleanedText = re.sub(r"[*_#`~]", "", finalText)
@@ -72,4 +72,4 @@ class OllamaTutor:
           return cleanedText
       except Exception:
         pass
-    return "Japan Is A Beautiful Island Nation In East Asia Known For Its Rich Culture, History & Technology" if tutorLanguage == "English" and "japan" in userPrompt.lower() else ("I Am Listening! Please Continue Speaking" if tutorLanguage == "English" else "お話を聞いています！続けて話してください")
+    return "I Am Listening! Please Continue Speaking" if tutorLanguage == "English" else "お話を聞いています！続けて話してください"

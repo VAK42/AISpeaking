@@ -104,13 +104,14 @@ async function sendUserMessage(textContent) {
       })
     });
     const data = await response.json();
-    const tutorReply = data.response || "I Understood! Let Us Continue Practicing";
+    const defaultReply = appState.activeLanguage === "Japanese" ? "理解しました！会話を続けましょう" : "I Understood! Let Us Continue Practicing";
+    const tutorReply = data.response || defaultReply;
     appendTutorMessage(tutorReply);
     appState.conversationHistory.push({ role: "Nobunaga", content: tutorReply });
     playSpeech(tutorReply, appState.activeLanguage);
   } catch (errorObject) {
     updateStatus("Connection Error", false);
-    const fallbackText = "Sorry, I Encountered A Network Issue! Please Try Again";
+    const fallbackText = appState.activeLanguage === "Japanese" ? "通信エラーが発生しました！もう一度お試しください" : "Sorry, I Encountered A Network Issue! Please Try Again";
     appendTutorMessage(fallbackText);
   }
 }
@@ -167,27 +168,29 @@ async function startAudioRecording() {
     appState.mediaRecorder.onstop = async () => {
       syncActiveLanguage();
       updateStatus("Transcribing Speech Input", true);
-      const audioBlob = new Blob(appState.audioChunks, { type: "audio/wav" });
-      const arrayBuffer = await audioBlob.arrayBuffer();
-      const base64Audio = btoa(
-        new Uint8Array(arrayBuffer).reduce((dataString, byteValue) => dataString + String.fromCharCode(byteValue), "")
-      );
-      const languageCode = appState.activeLanguage === "Japanese" ? "ja" : "en";
-      try {
-        const response = await fetch("/api/transcribe", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ audio: base64Audio, language: languageCode })
-        });
-        const data = await response.json();
-        if (data.transcript && data.transcript.trim() !== "") {
-          sendUserMessage(data.transcript);
-        } else {
-          updateStatus("No Speech Detected", false);
+      const recordedMime = (appState.mediaRecorder && appState.mediaRecorder.mimeType) || "audio/webm";
+      const audioBlob = new Blob(appState.audioChunks, { type: recordedMime });
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Audio = reader.result.split(",")[1];
+        const languageCode = appState.activeLanguage === "Japanese" ? "ja" : "en";
+        try {
+          const response = await fetch("/api/transcribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ audio: base64Audio, language: languageCode })
+          });
+          const data = await response.json();
+          if (data.transcript && data.transcript.trim() !== "") {
+            sendUserMessage(data.transcript);
+          } else {
+            updateStatus("No Speech Detected", false);
+          }
+        } catch (errorObject) {
+          updateStatus("Transcription Failed", false);
         }
-      } catch (errorObject) {
-        updateStatus("Transcription Failed", false);
-      }
+      };
+      reader.readAsDataURL(audioBlob);
     };
     appState.mediaRecorder.start();
     appState.isRecording = true;

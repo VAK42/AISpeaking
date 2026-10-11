@@ -1,4 +1,5 @@
 import io
+import av
 import os
 import wave
 import importlib
@@ -7,6 +8,14 @@ try:
   fasterWhisperModule = importlib.import_module("faster_whisper")
 except Exception:
   fasterWhisperModule = None
+try:
+  orgAV = av.open
+  def pchAV(*posargs, **kwargs):
+    kwargs.pop("metadata_errors", None)
+    return orgAV(*posargs, **kwargs)
+  av.open = pchAV
+except Exception:
+  pass
 class WhisperTranscriber:
   def __init__(self, modelSize="turbo", downloadRoot="models/whisper"):
     self.modelSize = modelSize
